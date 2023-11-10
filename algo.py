@@ -1,6 +1,6 @@
 import numpy as np
 from state import next_state, solved_state
-from location import next_location
+from location import next_location, solved_location
 
 
 def solve(init_state, init_location, method):
@@ -40,26 +40,46 @@ def solve(init_state, init_location, method):
                     expand_count += 1
 
                     if np.array_equal(new_node[1], solved_state()):
-                        print("\n", "Number of explored nodes: ", explore_count, "\nNumber of expanded Nodes: ", expand_count, "\nSearch depth: ", limit, "\n")
+                        print("\nNumber of explored nodes: ", explore_count, "\nNumber of expanded Nodes: ",
+                              expand_count, "\nSearch depth: ", limit, "\n")
                         return np.array(new_node[0])
 
-                    # if 11 == actions[0] and 7 in actions and 9 in actions and 1 in actions and 6 in actions:
-                    #     print("\nnode:\n", node, "\nactions:\n", actions, "\nnew_node:\n", new_node)
             fringe = new_fringe
             explore_count += 1
-        # second = next_state(init_state, 11)
-        # third = next_state(second, 7)
-        # fourth = next_state(third, 9)
-        # fifth = next_state(fourth, 1)
-        # sixth = next_state(fifth, 6)
-        # print(np.array_equal(sixth, solved_state()), "\n\n")
-        # print("\n\n", sixth)
-        # print("\n\n", solved_state())
+
         print("Could not find the answer")
 
 
     elif method == 'A*':
-        ...
+        fringe = [([], init_state, init_location, 0 + calculate_heuristic(init_location))]
+        count = 0
+        while True:
+            count += 1
+            print(count)
+
+            target_node = fringe[0]
+            for node in fringe:
+                new_f = node[3]
+                if target_node[3] > new_f:
+                    target_node = node
+
+            for i in range(1, 12 + 1):
+                actions = list.copy(target_node[0])
+                actions.append(i)
+                new_location = next_location(target_node[2], i)
+                new_node = (
+                    actions, next_state(target_node[1], i), new_location,
+                    len(actions) + calculate_heuristic(new_location))
+                fringe.append(new_node)
+
+                print("\n\ntarget_node:\n", target_node[0])
+
+
+                if np.array_equal(new_node[1], solved_state()):
+                    return np.array(new_node[0])
+
+            fringe.remove(target_node)
+
 
     elif method == 'BiBFS':
         ...
@@ -68,9 +88,22 @@ def solve(init_state, init_location, method):
         return []
 
 
+def calculate_heuristic(location):
+    target_location = solved_location()
+    h = 0
+    h += abs(int(location[0, 0, 0]) - int(target_location[0, 0, 0]))
+    h += abs(int(location[0, 0, 1]) - int(target_location[0, 0, 1]))
+    h += abs(int(location[0, 1, 0]) - int(target_location[0, 1, 0]))
+    h += abs(int(location[0, 1, 1]) - int(target_location[0, 1, 1]))
+    h += abs(int(location[1, 0, 0]) - int(target_location[1, 0, 0]))
+    h += abs(int(location[1, 0, 1]) - int(target_location[1, 0, 1]))
+    h += abs(int(location[1, 1, 0]) - int(target_location[1, 1, 0]))
+    h += abs(int(location[1, 1, 1]) - int(target_location[1, 1, 1]))
+    return h / 4
+
+
 if __name__ == '__main__':
-    a = []
-    b = list.copy(a)
-    b.append(1)
-    print(a)
-    print(b)
+    a = solved_location()
+    print(type(a))
+    print(a[0, 0, 1])
+    print(abs(a[0, 1, 0] - 5 - a[0, 0, 1]))
