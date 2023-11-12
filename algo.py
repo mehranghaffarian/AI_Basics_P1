@@ -4,6 +4,22 @@ from location import next_location, solved_location
 import heapq
 
 
+def find_reverse_action(action):
+    pre_action = (action + 6) % 12
+    if pre_action == 0:
+        pre_action = 12
+
+    return pre_action
+
+
+def resolve_actions(forward_actions, backward_actions):
+    print("\n\nwhole actions:\n", forward_actions, backward_actions, "\n")
+    for j in range(1, len(backward_actions) + 1):
+        forward_actions.append(backward_actions[-1 * j])
+
+    return np.array(forward_actions)
+
+
 def solve(init_state, init_location, method):
     """
     Solves the given Rubik's cube using the selected search algorithm.
@@ -21,7 +37,7 @@ def solve(init_state, init_location, method):
     # 1. use 'solved_state()' to obtain the goal state.
     # 2. use 'next_state()' to obtain the next state when taking an action .++
     # 3. use 'next_location()' to obtain the next location of the little cubes when taking an action.
-    # 4. you can use 'Set', 'Dictionary', 'OrderedDict', and 'heapq' as efficient data structures.
+    # 4. you can use 'Set', 'Dictionary', 'OrderedD
 
     if method == 'Random':
         return list(np.random.randint(1, 12 + 1, 10))
@@ -105,9 +121,56 @@ def solve(init_state, init_location, method):
         #
         #     fringe.remove(target_node)
 
-
     elif method == 'BiBFS':
-        ...
+        forward_fringe = {np.array_str(init_state): ([], init_state)}
+        backward_fringe = {np.array_str(solved_state()): ([], solved_state())}
+
+        new_forward_fringe = forward_fringe.copy()
+        new_backward_fringe = backward_fringe.copy()
+
+        for limit in range(1, 12):
+            curr_forward_fringe = new_forward_fringe.copy()
+            curr_backward_fringe = new_backward_fringe.copy()
+
+            new_forward_fringe.clear()
+            new_backward_fringe.clear()
+
+            for state, node in curr_forward_fringe.items():
+                for i in range(1, 12 + 1):
+                    new_state = next_state(node[1], i)
+                    new_key = np.array_str(new_state)
+
+                    if new_key in forward_fringe:
+                        continue
+
+                    new_actions = list.copy(node[0])
+                    new_actions.append(i)
+
+                    new_forward_fringe[new_key] = (new_actions, new_state)
+
+                    if np.array_equal(new_state, solved_state()):
+                        print("find solution in straight forward")
+                        return np.array(new_actions)
+                    if new_key in backward_fringe:
+                        print("find solution in forward")
+                        return resolve_actions(new_actions, backward_fringe[new_key][0])
+
+            for state, node in curr_backward_fringe.items():
+                for i in range(1, 12 + 1):
+                    pre_state = next_state(node[1], find_reverse_action(i))
+                    new_key = np.array_str(pre_state)
+
+                    if new_key in backward_fringe:
+                        continue
+
+                    new_actions = list.copy(node[0])
+                    new_actions.append(i)
+
+                    new_backward_fringe[new_key] = (new_actions, pre_state)
+
+                    if new_key in forward_fringe:
+                        print("find solution in backward")
+                        return resolve_actions(forward_fringe[new_key][0], new_actions)
 
     else:
         return []
@@ -128,7 +191,7 @@ def calculate_heuristic(location):
 
 
 if __name__ == '__main__':
-    a = [1, 9, 5, 6]
-    heapq.heapify(a)
-    print(heapq.heappop(a))
-    print(a)
+    a = [1, 5, 8]
+    b = [8, 2, 12]
+    print(resolve_actions(a, b))
+#     1, 5, 8, 6, 8, 2
