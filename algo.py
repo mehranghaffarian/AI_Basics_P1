@@ -1,6 +1,7 @@
 import numpy as np
 from state import next_state, solved_state
 from location import next_location, solved_location
+import heapq
 
 
 def solve(init_state, init_location, method):
@@ -49,36 +50,60 @@ def solve(init_state, init_location, method):
 
         print("Could not find the answer")
 
-
     elif method == 'A*':
-        fringe = [([], init_state, init_location, 0 + calculate_heuristic(init_location))]
-        count = 0
+        fringe = [(0 + calculate_heuristic(init_location), [], init_state, init_location)]
+        explore_count = 0
+        expand_count = 0
         while True:
-            count += 1
-            print(count)
+            target_node = heapq.heappop(fringe)
 
-            target_node = fringe[0]
-            for node in fringe:
-                new_f = node[3]
-                if target_node[3] > new_f:
-                    target_node = node
-
+            explore_count += 1
             for i in range(1, 12 + 1):
-                actions = list.copy(target_node[0])
+                actions = list.copy(target_node[1])
                 actions.append(i)
-                new_location = next_location(target_node[2], i)
+                new_location = next_location(target_node[3], i)
                 new_node = (
-                    actions, next_state(target_node[1], i), new_location,
-                    len(actions) + calculate_heuristic(new_location))
-                fringe.append(new_node)
+                    len(actions) + calculate_heuristic(new_location),
+                    actions,
+                    next_state(target_node[2], i),
+                    new_location)
 
-                print("\n\ntarget_node:\n", target_node[0])
+                expand_count += 1
+                heapq.heappush(fringe, new_node)
 
+                if np.array_equal(new_node[2], solved_state()):
+                    print("\nNumber of explored nodes: ", explore_count, "\nNumber of expanded Nodes: ",
+                          expand_count, "\nSearch depth: ", len(new_node[1]), "\n")
+                    return np.array(new_node[1])
 
-                if np.array_equal(new_node[1], solved_state()):
-                    return np.array(new_node[0])
-
-            fringe.remove(target_node)
+        # fringe = [([], init_state, init_location, 0 + calculate_heuristic(init_location))]
+        # explore_count = 0
+        # expand_count = 0
+        # while True:
+        #     target_node = fringe[0]
+        #     for node in fringe:
+        #         new_f = node[3]
+        #         if target_node[3] > new_f:
+        #             target_node = node
+        #
+        #     explore_count += 1
+        #     for i in range(1, 12 + 1):
+        #         actions = list.copy(target_node[0])
+        #         actions.append(i)
+        #         new_location = next_location(target_node[2], i)
+        #         new_node = (
+        #             actions, next_state(target_node[1], i), new_location,
+        #             len(actions) + calculate_heuristic(new_location))
+        #
+        #         expand_count += 1
+        #         fringe.append(new_node)
+        #
+        #         if np.array_equal(new_node[1], solved_state()):
+        #             print("\nNumber of explored nodes: ", explore_count, "\nNumber of expanded Nodes: ",
+        #                   expand_count, "\nSearch depth: ", len(new_node[0]), "\n")
+        #             return np.array(new_node[0])
+        #
+        #     fringe.remove(target_node)
 
 
     elif method == 'BiBFS':
@@ -103,7 +128,7 @@ def calculate_heuristic(location):
 
 
 if __name__ == '__main__':
-    a = solved_location()
-    print(type(a))
-    print(a[0, 0, 1])
-    print(abs(a[0, 1, 0] - 5 - a[0, 0, 1]))
+    a = [1, 9, 5, 6]
+    heapq.heapify(a)
+    print(heapq.heappop(a))
+    print(a)
